@@ -1,0 +1,13 @@
+package com.example.veridex.veridex;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
+public class VeridexApplication {
+
+    public static void main(String[] args) {
+        SpringApplication.run(VeridexApplication.class, args);
+    }
+
+}
