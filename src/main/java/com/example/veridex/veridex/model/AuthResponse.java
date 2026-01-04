@@ -13,14 +13,16 @@ public class AuthResponse {
     private String message;
     private String name;
     private String email;
+    private String role;
     private Map<String,String> errors;
     private LocalDateTime timeStamp;
 
-    public AuthResponse(int statusCode, String message, String name, String email, Map<String, String> errors, LocalDateTime timeStamp) {
+    public AuthResponse(int statusCode, String message, String name, String email,String role, Map<String, String> errors, LocalDateTime timeStamp) {
         this.statusCode = statusCode;
         this.message = message;
         this.name = name;
         this.email = email;
+        this.role = role;
         this.errors = errors;
         this.timeStamp = timeStamp;
     }

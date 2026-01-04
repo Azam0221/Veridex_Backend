@@ -17,7 +17,7 @@ import java.time.LocalDateTime;
 import java.util.Map;
 
 @RestController
-@RequestMapping("api/auth")
+@RequestMapping("/api/auth")
 public class AuthController {
 
     @Autowired
@@ -60,7 +60,8 @@ public class AuthController {
                     "User is authenticated",
                     null,
                     email,
-                    Map.of("role", role),
+                    role,
+                    null,
                     LocalDateTime.now()
             ));
         }
