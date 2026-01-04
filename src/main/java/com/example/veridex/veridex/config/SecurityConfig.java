@@ -65,6 +65,7 @@ public class SecurityConfig {
 
         System.out.println("Security Config");
         http
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests( auth ->
                         auth.requestMatchers(
