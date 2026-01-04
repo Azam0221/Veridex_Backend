@@ -42,7 +42,13 @@ public class JwtFilter extends OncePerRequestFilter {
         System.out.println("Do Filter for path: " + request.getServletPath());
 
         String path = request.getServletPath();
-        if( path.equals("/login")){
+        if( path.equals("/") ||
+                path.equals("/api/auth/login") ||
+            path.equals("/api/auth/register") ||
+                path.equals("/api/auth/profile") ||
+            path.equals("/test/health") ||
+            path.equals("/api/auth/logout")){
+
             filterChain.doFilter(request,response);
             return;
         }
@@ -107,6 +113,7 @@ public class JwtFilter extends OncePerRequestFilter {
         AuthResponse error = new AuthResponse(
                 status.value(),
                 message,
+                null,
                 null,
                 null,
                 Map.of("token", message),
