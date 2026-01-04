@@ -72,8 +72,7 @@ public class SecurityConfig {
                                         "/test/health",
                                         "/api/auth/login",
                                         "/api/auth/register",
-                                        "/api/auth/logout",
-                                        "/api/auth/profile"
+                                        "/api/auth/logout"
                                 ).permitAll()
 
                                 .anyRequest().authenticated()
