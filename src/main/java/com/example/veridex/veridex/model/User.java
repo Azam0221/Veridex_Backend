@@ -7,7 +7,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 
-@Entity
+@Entity(name = "app_user")
 @Data
 public class User {
 
