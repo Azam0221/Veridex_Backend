@@ -18,11 +18,12 @@ public class Loan {
 
     private String borrowerName;
     private BigDecimal principalAmount;
-
     private BigDecimal baseMargin;
     private BigDecimal currentMargin;
 
-    @Enumerated
+    private Integer tenorYears;
+
+    @Enumerated(EnumType.STRING)
     private Status status;
 
     @OneToMany(mappedBy = "loan", cascade = CascadeType.ALL)
