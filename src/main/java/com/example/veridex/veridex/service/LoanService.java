@@ -2,13 +2,12 @@ package com.example.veridex.veridex.service;
 
 
 import com.example.veridex.veridex.enum_.OptimizationType;
+import com.example.veridex.veridex.enum_.Role;
 import com.example.veridex.veridex.enum_.Status;
-import com.example.veridex.veridex.model.KPI;
-import com.example.veridex.veridex.model.KPIRequest;
-import com.example.veridex.veridex.model.Loan;
-import com.example.veridex.veridex.model.LoanRequest;
+import com.example.veridex.veridex.model.*;
 import com.example.veridex.veridex.repository.KpiRepository;
 import com.example.veridex.veridex.repository.LoanRepository;
+import com.example.veridex.veridex.repository.SyndicateMemberRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,6 +18,7 @@ public class LoanService {
 
     private final LoanRepository loanRepository;
     private final KpiRepository kpiRepository;
+    private final SyndicateMemberRepository syndicateMemberRepository; //
 
     @Transactional
     public Loan createLoan(LoanRequest request){
@@ -33,6 +33,15 @@ public class LoanService {
         loan.setStatus(Status.ACTIVE);
 
         Loan savedLoan = loanRepository.save(loan);
+
+        SyndicateMember agent = new SyndicateMember();
+        agent.setLoan(savedLoan);
+
+        agent.setBankName(request.getBorrowerName() != null ? request.getBorrowerName(): "Agent Bank");
+        agent.setParticipationAmount(request.getAmount());
+        agent.setRole(Role.AGENT);
+
+        syndicateMemberRepository.save(agent);
 
         if (request.getKpis() != null) {
             for (KPIRequest kpiDto : request.getKpis()) {

@@ -2,6 +2,7 @@ package com.example.veridex.veridex.model;
 
 
 import com.example.veridex.veridex.enum_.OptimizationType;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -23,6 +24,7 @@ public class KPI {
     @Enumerated(EnumType.STRING)
     private OptimizationType optimizationType;
 
+    @JsonIgnore
     @ManyToOne
     @JoinColumn(name = "loan_id")
     private Loan loan;
