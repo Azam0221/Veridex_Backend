@@ -29,17 +29,17 @@ public class VerificationService {
 
         try{
 
-            Map<String, Double> reportedData = objectMapper.readValue(
+            Map<String, Object> reportedData = objectMapper.readValue(
                     report.getExtractedDataJson(), Map.class
             );
 
             Map<String, Object> verificationResults = new HashMap<>();
             boolean allPassed = true;
 
-            for (Map.Entry<String, Double> entry : reportedData.entrySet()) {
+            for (Map.Entry<String, Object> entry : reportedData.entrySet()) {
 
                 String kpiKey = entry.getKey();
-                Double reportedVal = Double.valueOf(entry.getValue().toString());
+                Double reportedVal = ((Number) entry.getValue()).doubleValue();
 
                 Double trustedVal = externalService.fetchTrustedValue(kpiKey, reportedVal);
 
