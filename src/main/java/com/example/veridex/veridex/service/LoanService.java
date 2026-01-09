@@ -12,6 +12,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class LoanService {
@@ -62,5 +64,14 @@ public class LoanService {
 
         return savedLoan;
 
+    }
+
+    public List<Loan> getAllLoans() {
+        return loanRepository.findAll();
+    }
+
+    public Loan getLoanById(Long id) {
+        return loanRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Loan not found with ID: " + id));
     }
 }

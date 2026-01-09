@@ -2,12 +2,10 @@ package com.example.veridex.veridex.service;
 
 
 import com.example.veridex.veridex.enum_.Role;
-import com.example.veridex.veridex.model.Loan;
-import com.example.veridex.veridex.model.SyndicateDashboardDTO;
-import com.example.veridex.veridex.model.SyndicateMember;
-import com.example.veridex.veridex.model.SyndicateRequest;
+import com.example.veridex.veridex.model.*;
 import com.example.veridex.veridex.repository.LoanRepository;
 import com.example.veridex.veridex.repository.SyndicateMemberRepository;
+import com.example.veridex.veridex.repository.VerificationRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -22,6 +20,7 @@ public class SyndicateService {
 
     private final SyndicateMemberRepository syndicateMemberRepository;
     private final LoanRepository loanRepository;
+    private final VerificationRepository verificationRepository;
 
     public SyndicateMember addMember(Long loanId , SyndicateRequest request){
 
@@ -36,6 +35,11 @@ public class SyndicateService {
         member.setRole(Role.valueOf(request.getRole().toUpperCase()));
 
         return syndicateMemberRepository.save(member);
+    }
+
+    public List<VerificationReport> getAuditTrail(Long loanId) {
+
+        return verificationRepository.findByEsgReport_Loan_IdOrderByVerifiedAtDesc(loanId);
     }
 
     public SyndicateDashboardDTO getMemberStats(Long memberId) {
@@ -65,6 +69,8 @@ public class SyndicateService {
                 .myShareOfSavings(mySavings)
                 .build();
     }
+
+
 
 
     public List<SyndicateMember> getLoanMembers(Long loanId) {

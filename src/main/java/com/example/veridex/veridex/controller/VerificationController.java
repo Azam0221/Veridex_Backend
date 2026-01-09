@@ -5,10 +5,7 @@ import com.example.veridex.veridex.model.VerificationReport;
 import com.example.veridex.veridex.service.VerificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("api/verification")
@@ -21,6 +18,12 @@ public class VerificationController {
     public ResponseEntity<VerificationReport> runVerification(@RequestParam Long reportId) {
         VerificationReport report = verificationService.verifyReport(reportId);
         return ResponseEntity.ok(report);
+    }
+
+    @GetMapping("/report/{reportId}")
+    public ResponseEntity<VerificationReport> getVerificationResult(@PathVariable Long reportId) {
+
+        return ResponseEntity.ok(verificationService.findByReportId(reportId));
     }
 
 }
