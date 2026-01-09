@@ -6,6 +6,7 @@ import jakarta.persistence.*;
 import lombok.Data;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 
 @Entity(name = "loan")
@@ -23,8 +24,12 @@ public class Loan {
 
     private Integer tenorYears;
 
+
     @Enumerated(EnumType.STRING)
     private Status status;
+
+    private LocalDate nextReportingDate;
+    private LocalDate maturityDate;
 
     @OneToMany(mappedBy = "loan", cascade = CascadeType.ALL)
     private List<KPI> kpi;
