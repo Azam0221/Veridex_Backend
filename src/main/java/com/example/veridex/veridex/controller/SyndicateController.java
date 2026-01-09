@@ -4,6 +4,7 @@ package com.example.veridex.veridex.controller;
 import com.example.veridex.veridex.model.SyndicateDashboardDTO;
 import com.example.veridex.veridex.model.SyndicateMember;
 import com.example.veridex.veridex.model.SyndicateRequest;
+import com.example.veridex.veridex.model.VerificationReport;
 import com.example.veridex.veridex.service.SyndicateService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -33,6 +34,13 @@ public class SyndicateController {
     @GetMapping("/loan/{loanId}")
     public ResponseEntity<List<SyndicateMember>> getLoanMembers(@PathVariable Long loanId) {
         return ResponseEntity.ok(syndicateService.getLoanMembers(loanId));
+    }
+
+
+    @GetMapping("/audit-trail/{loanId}")
+    public ResponseEntity<List<VerificationReport>> getAuditTrail(@PathVariable Long loanId) {
+
+        return ResponseEntity.ok(syndicateService.getAuditTrail(loanId));
     }
 
 }
