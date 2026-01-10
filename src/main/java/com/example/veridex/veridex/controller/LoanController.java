@@ -18,15 +18,19 @@ public class LoanController {
     private final LoanService loanService;
 
     @PostMapping("/create")
-    public ResponseEntity<Loan> createLoan(@RequestBody LoanRequest request) {
-        Loan newLoan = loanService.createLoan(request);
-        return ResponseEntity.ok(newLoan);
+    public ResponseEntity<Loan> createLoan(@RequestBody LoanRequest request , @RequestParam String email) {
+        return loanService.createLoan(request,email);
     }
 
 
-    @GetMapping("/all")
-    public ResponseEntity<List<Loan>> getAllLoans() {
-        return ResponseEntity.ok(loanService.getAllLoans());
+    @GetMapping("/agent/all")
+    public ResponseEntity<List<Loan>> getAllLoansForAgent(String email) {
+        return ResponseEntity.ok(loanService.getLoansManagedBy(email));
+    }
+
+    @GetMapping("/borrower/all")
+    public ResponseEntity<List<Loan>> getAllLoansForBorrower(String email) {
+        return ResponseEntity.ok(loanService.getLoansOwnedBy(email));
     }
 
     @GetMapping("/{id}")

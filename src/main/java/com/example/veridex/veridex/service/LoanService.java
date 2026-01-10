@@ -8,10 +8,13 @@ import com.example.veridex.veridex.model.*;
 import com.example.veridex.veridex.repository.KpiRepository;
 import com.example.veridex.veridex.repository.LoanRepository;
 import com.example.veridex.veridex.repository.SyndicateMemberRepository;
+import com.example.veridex.veridex.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Service
@@ -20,30 +23,50 @@ public class LoanService {
 
     private final LoanRepository loanRepository;
     private final KpiRepository kpiRepository;
-    private final SyndicateMemberRepository syndicateMemberRepository; //
+    private final SyndicateMemberRepository syndicateMemberRepository;
+    private final UserRepository userRepository;
 
     @Transactional
-    public Loan createLoan(LoanRequest request){
+    public ResponseEntity<Loan> createLoan(LoanRequest request, String agentEmail){
+
+        User agentUser = userRepository.findByEmail(agentEmail);
+
+        if(agentUser == null){
+            return ResponseEntity.badRequest().body(null);
+        }
+
+        User borrowerUser = userRepository.findByEmail(request.getBorrowerEmail());
+
+        if(borrowerUser == null){
+            return ResponseEntity.badRequest().body(null);
+        }
 
         Loan loan = new Loan();
-        loan.setBorrowerName(request.getBorrowerName());
+        loan.setAgent(agentUser);
+        loan.setBorrower(borrowerUser);
+        loan.setBorrowerName(borrowerUser.getOrganizationName());
         loan.setPrincipalAmount(request.getAmount());
         loan.setBaseMargin(request.getBaseMargin());
         loan.setTenorYears(request.getTenorYears());
         loan.setCurrentMargin(request.getBaseMargin());
 
+        loan.setNextReportingDate(LocalDate.now().plusYears(1));
+        loan.setMaturityDate(LocalDate.now().plusYears(request.getTenorYears()));
+
         loan.setStatus(Status.ACTIVE);
 
         Loan savedLoan = loanRepository.save(loan);
 
-        SyndicateMember agent = new SyndicateMember();
-        agent.setLoan(savedLoan);
+        SyndicateMember agentMember = new SyndicateMember();
+        agentMember.setLoan(savedLoan);
 
-        agent.setBankName(request.getBorrowerName() != null ? request.getBorrowerName(): "Agent Bank");
-        agent.setParticipationAmount(request.getAmount());
-        agent.setRole(Role.AGENT);
+        agentMember.setLender(agentUser);
 
-        syndicateMemberRepository.save(agent);
+        agentMember.setBankName(agentUser.getOrganizationName());
+        agentMember.setParticipationAmount(request.getAmount());
+        agentMember.setRole(Role.AGENT);
+
+        syndicateMemberRepository.save(agentMember);
 
         if (request.getKpis() != null) {
             for (KPIRequest kpiDto : request.getKpis()) {
@@ -61,13 +84,16 @@ public class LoanService {
                 kpiRepository.save(kpi);
             }
         }
-
-        return savedLoan;
+        return ResponseEntity.ok(savedLoan);
 
     }
 
-    public List<Loan> getAllLoans() {
-        return loanRepository.findAll();
+    public List<Loan> getLoansManagedBy(String agentEmail) {
+        return loanRepository.findByAgent_Email(agentEmail);
+    }
+
+    public List<Loan> getLoansOwnedBy(String borrowerEmail) {
+        return loanRepository.findByBorrower_Email(borrowerEmail);
     }
 
     public Loan getLoanById(Long id) {

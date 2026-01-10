@@ -19,6 +19,10 @@ public class SyndicateMember {
     private BigDecimal participationAmount;
     private Role role;
 
+    @ManyToOne
+    @JoinColumn(name = "lender_id", nullable = false)
+    private User lender;
+
     @JsonIgnore
     @ManyToOne
     @JoinColumn(name = "loan_id")

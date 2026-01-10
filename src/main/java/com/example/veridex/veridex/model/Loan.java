@@ -17,6 +17,14 @@ public class Loan {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @ManyToOne
+    @JoinColumn(name = "agent_id", nullable = false)
+    private User agent;
+
+    @ManyToOne
+    @JoinColumn(name = "borrower_id", nullable = false)
+    private User borrower;
+
     private String borrowerName;
     private BigDecimal principalAmount;
     private BigDecimal baseMargin;

@@ -23,13 +23,18 @@ public class SyndicateController {
     public ResponseEntity<SyndicateMember> addMember(
             @PathVariable Long loanId,
             @RequestBody SyndicateRequest request) {
-        return ResponseEntity.ok(syndicateService.addMember(loanId, request));
+        return syndicateService.addMember(loanId, request);
     }
 
-    @GetMapping("/dashboard/{memberId}")
-    public ResponseEntity<SyndicateDashboardDTO> getMemberDashboard(@PathVariable Long memberId) {
-        return ResponseEntity.ok(syndicateService.getMemberStats(memberId));
+    @GetMapping("/dashboard")
+    public ResponseEntity<List<SyndicateDashboardDTO>> getMyPortfolio(@RequestParam String email) {
+        return ResponseEntity.ok(syndicateService.getLenderPortfolio(email));
     }
+
+//    @GetMapping("/dashboard/{memberId}")
+//    public ResponseEntity<SyndicateDashboardDTO> getMemberDashboard(@PathVariable Long memberId) {
+//        return ResponseEntity.ok(syndicateService.getMemberStats(memberId));
+//    }
 
     @GetMapping("/loan/{loanId}")
     public ResponseEntity<List<SyndicateMember>> getLoanMembers(@PathVariable Long loanId) {

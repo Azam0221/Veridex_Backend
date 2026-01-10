@@ -8,6 +8,8 @@ import java.math.BigDecimal;
 @Data
 public class SyndicateRequest {
 
+    private String lenderEmail;
+
     private String bankName;
     private BigDecimal participationAmount;
 
