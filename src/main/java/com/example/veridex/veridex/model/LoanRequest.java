@@ -7,6 +7,7 @@ import java.util.List;
 @Data
 public class LoanRequest {
     private String borrowerName;
+    private String borrowerEmail;
     private BigDecimal amount;
     private BigDecimal baseMargin;
     private Integer tenorYears;
