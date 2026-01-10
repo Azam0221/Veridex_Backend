@@ -11,4 +11,6 @@ import java.util.List;
 public interface SyndicateMemberRepository extends JpaRepository<SyndicateMember, Long> {
 
     List<SyndicateMember> findByLoanId(Long loanId);
+
+    List<SyndicateMember> findByLender_Email(String email);
 }
