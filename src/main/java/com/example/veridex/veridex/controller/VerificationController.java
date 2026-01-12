@@ -14,9 +14,9 @@ public class VerificationController {
 
     private final VerificationService verificationService;
 
-    @PostMapping("/run")
-    public ResponseEntity<VerificationReport> runVerification(@RequestParam Long reportId) {
-        VerificationReport report = verificationService.verifyReport(reportId);
+    @PostMapping("/run/{loanId}")
+    public ResponseEntity<VerificationReport> runVerification(@PathVariable Long loanId) {
+        VerificationReport report = verificationService.verifyReport(loanId);
         return ResponseEntity.ok(report);
     }
 

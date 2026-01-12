@@ -17,7 +17,7 @@ public class ExternalVerificationService {
         if (random.nextInt(10) > 8) {
             variance = 0.15;
         }
-
+ 
         double trustedValue = reportedValue * (1.0 + variance);
 
         return Math.round(trustedValue * 100.0) / 100.0;

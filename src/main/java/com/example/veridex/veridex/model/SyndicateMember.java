@@ -28,3 +28,4 @@ public class SyndicateMember {
     @JoinColumn(name = "loan_id")
     private Loan loan;
 }
+ 
