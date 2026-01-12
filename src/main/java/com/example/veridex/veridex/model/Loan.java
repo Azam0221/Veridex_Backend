@@ -41,4 +41,7 @@ public class Loan {
 
     @OneToMany(mappedBy = "loan", cascade = CascadeType.ALL)
     private List<KPI> kpi;
+
+    @OneToMany(mappedBy = "loan", cascade = CascadeType.ALL)
+    private List<SyndicateMember> syndicateMembers;
 }
