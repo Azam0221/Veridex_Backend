@@ -1,6 +1,7 @@
 package com.example.veridex.veridex.controller;
 
 
+import com.example.veridex.veridex.model.AgentDashboardStatsDTO;
 import com.example.veridex.veridex.model.Loan;
 import com.example.veridex.veridex.model.LoanRequest;
 import com.example.veridex.veridex.service.LoanService;
@@ -22,14 +23,19 @@ public class LoanController {
         return loanService.createLoan(request,email);
     }
 
+    @GetMapping("/agent/stats")
+    public ResponseEntity<AgentDashboardStatsDTO> getAgentStats(@RequestParam String email) {
+        return ResponseEntity.ok(loanService.getAgentStats(email));
+    }
+
 
     @GetMapping("/agent/all")
-    public ResponseEntity<List<Loan>> getAllLoansForAgent(String email) {
+    public ResponseEntity<List<Loan>> getAllLoansForAgent(@RequestParam String email){
         return ResponseEntity.ok(loanService.getLoansManagedBy(email));
     }
 
     @GetMapping("/borrower/all")
-    public ResponseEntity<List<Loan>> getAllLoansForBorrower(String email) {
+    public ResponseEntity<List<Loan>> getAllLoansForBorrower(@RequestParam String email) {
         return ResponseEntity.ok(loanService.getLoansOwnedBy(email));
     }
 

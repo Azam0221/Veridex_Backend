@@ -55,7 +55,7 @@ public class MarginService {
         for (KPI kpi : loan.getKpi()) {
             boolean achieved = false;
 
-            Map<String, Object> kpiData = (Map<String, Object>) verificationDetails.get(kpi.getKpiType());
+            Map<String, Object> kpiData = (Map<String, Object>) verificationDetails.get(kpi.getName());
 
             if (kpiData != null && "VERIFIED".equals(kpiData.get("status"))) {
                 Double actualValue = Double.valueOf(kpiData.get("trusted_source").toString());
@@ -68,14 +68,16 @@ public class MarginService {
                 }
             }
             if (achieved) {
+                currentMargin = currentMargin.subtract(BigDecimal.valueOf(kpi.getMarginAdjustment()));
+
+                kpiResults.add(new MarginCalculationResponse.KPIResult(
+                        kpi.getName(), true, -kpi.getMarginAdjustment()
+                ));
+            } else {
                 currentMargin = currentMargin.add(BigDecimal.valueOf(kpi.getMarginAdjustment()));
 
                 kpiResults.add(new MarginCalculationResponse.KPIResult(
-                        kpi.getName(), true, kpi.getMarginAdjustment()
-                ));
-            } else {
-                kpiResults.add(new MarginCalculationResponse.KPIResult(
-                        kpi.getName(), false, 0.0
+                        kpi.getName(), false, kpi.getMarginAdjustment()
                 ));
             }
         }

@@ -14,6 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -44,7 +45,7 @@ public class LoanService {
         Loan loan = new Loan();
         loan.setAgent(agentUser);
         loan.setBorrower(borrowerUser);
-        loan.setBorrowerName(borrowerUser.getOrganizationName());
+        loan.setBorrowerName(request.getBorrowerName());
         loan.setPrincipalAmount(request.getAmount());
         loan.setBaseMargin(request.getBaseMargin());
         loan.setTenorYears(request.getTenorYears());
@@ -62,7 +63,7 @@ public class LoanService {
 
         agentMember.setLender(agentUser);
 
-        agentMember.setBankName(agentUser.getOrganizationName());
+        agentMember.setBankName(agentUser.getName());
         agentMember.setParticipationAmount(request.getAmount());
         agentMember.setRole(Role.AGENT);
 
@@ -86,6 +87,37 @@ public class LoanService {
         }
         return ResponseEntity.ok(savedLoan);
 
+    }
+
+    public AgentDashboardStatsDTO getAgentStats(String agentEmail) {
+        List<Loan> loans = loanRepository.findByAgent_Email(agentEmail);
+
+        long activeCount = loans.size();
+
+        long pendingCount = loans.stream()
+                .filter(l -> LocalDate.now().plusDays(30).isAfter(l.getNextReportingDate()))
+                .count();
+
+        BigDecimal totalExposure = loans.stream()
+                .map(Loan::getPrincipalAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        double totalSavings = loans.stream()
+                .mapToDouble(l -> l.getBaseMargin().subtract(l.getCurrentMargin()).doubleValue())
+                .sum();
+
+        int avgBps = 0;
+        if (activeCount > 0) {
+            double avgSavingsPercent = totalSavings / activeCount;
+            avgBps = (int) (avgSavingsPercent * 100);
+        }
+
+        return AgentDashboardStatsDTO.builder()
+                .totalActiveLoans(activeCount)
+                .pendingVerification(pendingCount)
+                .totalExposure(totalExposure)
+                .avgMarginSavingsBps(avgBps)
+                .build();
     }
 
     public List<Loan> getLoansManagedBy(String agentEmail) {
