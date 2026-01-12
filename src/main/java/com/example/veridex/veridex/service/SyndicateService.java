@@ -38,6 +38,21 @@ public class SyndicateService {
             return ResponseEntity.badRequest().body(null);
         }
 
+        SyndicateMember agentMember = syndicateMemberRepository.findByLoanId(loanId).stream()
+                .filter(m -> m.getRole() == Role.AGENT)
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("Agent not found for this loan (Data Integrity Error)"));
+
+        BigDecimal newInvestment = request.getParticipationAmount();
+
+        if (agentMember.getParticipationAmount().compareTo(newInvestment) < 0) {
+            throw new RuntimeException("Agent does not have enough participation amount to sell this portion.");
+        }
+
+        BigDecimal newAgentAmount = agentMember.getParticipationAmount().subtract(newInvestment);
+        agentMember.setParticipationAmount(newAgentAmount);
+        syndicateMemberRepository.save(agentMember);
+
         SyndicateMember member = new SyndicateMember();
         member.setLoan(loan);
         member.setLender(lenderUser);
@@ -46,8 +61,8 @@ public class SyndicateService {
                 ? request.getBankName()
                 : lenderUser.getOrganizationName();
         member.setBankName(name);
-        member.setParticipationAmount(request.getParticipationAmount());
 
+        member.setParticipationAmount(newInvestment);
         member.setRole(Role.valueOf(request.getRole().toUpperCase()));
 
         return ResponseEntity.ok(syndicateMemberRepository.save(member));
