@@ -35,7 +35,7 @@ public class ESGController {
 
         StringBuilder kpiPrompt = new StringBuilder();
         for(KPI kpi: loan.getKpi()){
-            kpiPrompt.append("- Key: \"").append(kpi.getKpiType()).append("\"\n");
+            kpiPrompt.append("- Key: \"").append(kpi.getName()).append("\"\n");
             kpiPrompt.append("  Search for: ").append(kpi.getName()).append("\n");
             kpiPrompt.append("  Unit: ").append(kpi.getUnit()).append("\n");
         }
