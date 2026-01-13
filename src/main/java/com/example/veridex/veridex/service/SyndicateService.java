@@ -75,6 +75,7 @@ public class SyndicateService {
         return myInvestments.stream().map(this::calculateStats).collect(Collectors.toList());
     }
 
+
     private SyndicateDashboardDTO calculateStats(SyndicateMember member) {
 
         Loan loan = member.getLoan();
@@ -96,19 +97,22 @@ public class SyndicateService {
         BigDecimal mySavings = totalSavings.multiply(shareRatio);
 
         return SyndicateDashboardDTO.builder()
+                .loanId(loan.getId())
                 .bankName(member.getBankName())
                 .investmentAmount(member.getParticipationAmount())
                 .ownershipSharePercentage(shareRatio.doubleValue() * 100.0)
                 .totalLoanSavings(totalSavings)
                 .myShareOfSavings(mySavings)
+                .baseMargin(loan.getBaseMargin())
+                .currentMargin(loan.getCurrentMargin())
                 .build();
     }
-
+    
     public List<VerificationReport> getAuditTrail(Long loanId) {
 
         return verificationRepository.findByEsgReport_Loan_IdOrderByVerifiedAtDesc(loanId);
     }
-
+ 
     public SyndicateDashboardDTO getMemberStats(Long memberId) {
         SyndicateMember member = syndicateMemberRepository.findById(memberId)
                 .orElseThrow(() -> new RuntimeException("Member not found"));

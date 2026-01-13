@@ -4,6 +4,8 @@ package com.example.veridex.veridex.controller;
 import com.example.veridex.veridex.model.AuthResponse;
 import com.example.veridex.veridex.model.LoginRequest;
 import com.example.veridex.veridex.model.RegisterRequest;
+import com.example.veridex.veridex.model.User;
+import com.example.veridex.veridex.repository.UserRepository;
 import com.example.veridex.veridex.service.AuthService;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +24,9 @@ public class AuthController {
 
     @Autowired
     private AuthService authService;
+
+    @Autowired
+    private UserRepository userRepository;
 
     @RequestMapping("login")
     public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest loginRequest, HttpServletResponse response){
@@ -54,11 +59,13 @@ public class AuthController {
                     .map(item -> item.getAuthority())
                     .orElse("USER");
 
+            User user = userRepository.findByEmail(email);
+
 
             return ResponseEntity.ok(new AuthResponse(
                     200,
                     "User is authenticated",
-                    null,
+                    user.getName(),
                     email,
                     role,
                     null,
