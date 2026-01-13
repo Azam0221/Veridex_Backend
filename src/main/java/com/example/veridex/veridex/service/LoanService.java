@@ -89,34 +89,32 @@ public class LoanService {
 
     }
 
+
     public AgentDashboardStatsDTO getAgentStats(String agentEmail) {
         List<Loan> loans = loanRepository.findByAgent_Email(agentEmail);
 
-        long activeCount = loans.size();
-
-        long pendingCount = loans.stream()
-                .filter(l -> LocalDate.now().plusDays(30).isAfter(l.getNextReportingDate()))
+        long totalActive = loans.size();
+        long pending = loans.stream()
+                .filter(l -> l.getStatus() == Status.PENDING || l.getStatus() == Status.REQUIRES_REVIEW)
                 .count();
+
 
         BigDecimal totalExposure = loans.stream()
                 .map(Loan::getPrincipalAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        double totalSavings = loans.stream()
-                .mapToDouble(l -> l.getBaseMargin().subtract(l.getCurrentMargin()).doubleValue())
-                .sum();
+        double totalSavingsBps = loans.stream()
+                .mapToDouble(l ->
+                        l.getBaseMargin().subtract(l.getCurrentMargin()).doubleValue() * 100
+                ).sum();
 
-        int avgBps = 0;
-        if (activeCount > 0) {
-            double avgSavingsPercent = totalSavings / activeCount;
-            avgBps = (int) (avgSavingsPercent * 100);
-        }
+        int avgSavings = totalActive > 0 ? (int) (totalSavingsBps / totalActive) : 0;
 
         return AgentDashboardStatsDTO.builder()
-                .totalActiveLoans(activeCount)
-                .pendingVerification(pendingCount)
+                .totalActiveLoans(totalActive)
+                .pendingVerification(pending)
                 .totalExposure(totalExposure)
-                .avgMarginSavingsBps(avgBps)
+                .avgMarginSavingsBps(avgSavings)
                 .build();
     }
 

@@ -10,11 +10,14 @@ import java.math.BigDecimal;
 @Builder
 public class SyndicateDashboardDTO {
 
+    private Long loanId;
     private String bankName;
     private BigDecimal investmentAmount;
-
+ 
     private Double ownershipSharePercentage;
     private BigDecimal myShareOfSavings;
 
     private BigDecimal totalLoanSavings;
+    private BigDecimal baseMargin;
+    private BigDecimal currentMargin;
 }
