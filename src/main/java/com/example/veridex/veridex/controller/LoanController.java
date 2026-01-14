@@ -42,7 +42,7 @@ public class LoanController {
     @GetMapping("/{id}")
     public ResponseEntity<Loan> getLoanById(@PathVariable Long id) {
         return ResponseEntity.ok(loanService.getLoanById(id));
-    }
+    } 
 
 
 }

@@ -8,7 +8,9 @@ import com.example.veridex.veridex.repository.UserRepository;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -188,28 +190,15 @@ public class AuthService {
 
     }
 
+
     private void setTokenCookies(HttpServletResponse response, String accessToken, String refreshToken) {
+        ResponseCookie accessCookie = jwtService.generateCookie("access_token", accessToken, 1000 * 60 * 60L);
 
-        Cookie accessTokenCookie = new Cookie("access_token", accessToken);
-        accessTokenCookie.setHttpOnly(true);
-        accessTokenCookie.setSecure(true);
-        accessTokenCookie.setPath("/");
-        accessTokenCookie.setMaxAge(60 * 60);
-        response.addCookie(accessTokenCookie);
-        response.addHeader("Set-Cookie",
-                response.getHeader("Set-Cookie") + "; SameSite=Lax");
+        ResponseCookie refreshCookie = jwtService.generateCookie("refresh_token", refreshToken, 1000 * 60 * 60 * 24 * 7L);
 
-        // Refresh Token Cookie
-        Cookie refreshTokenCookie = new Cookie("refresh_token", refreshToken);
-        refreshTokenCookie.setHttpOnly(true);
-        refreshTokenCookie.setSecure(true);
-        refreshTokenCookie.setPath("/");
-        refreshTokenCookie.setMaxAge(7 * 24 * 60 * 60);
-        response.addCookie(refreshTokenCookie);
-        response.addHeader("Set-Cookie",
-                response.getHeader("Set-Cookie") + "; SameSite=Lax");
+        response.addHeader(HttpHeaders.SET_COOKIE, accessCookie.toString());
+        response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
     }
-
 
     public  ResponseEntity<AuthResponse> logout(HttpServletResponse response){
 
