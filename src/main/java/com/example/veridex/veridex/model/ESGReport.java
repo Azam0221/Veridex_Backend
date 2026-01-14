@@ -21,7 +21,7 @@ public class ESGReport {
     @Lob
     @Basic(fetch = FetchType.LAZY)
     @Column(columnDefinition = "TEXT")
-    @JsonIgnore
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private String rawPdfText;
 
     @Column(columnDefinition = "TEXT")
