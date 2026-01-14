@@ -8,6 +8,8 @@ import com.example.veridex.veridex.repository.VerificationRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -21,6 +23,7 @@ public class VerificationService {
     private final ExternalVerificationService externalService;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
+    @Transactional
     public VerificationReport verifyReport(Long loanId){
 
         ESGReport report = esgReportRepository.findTopByLoanIdOrderByUploadTimestampDesc(loanId)
