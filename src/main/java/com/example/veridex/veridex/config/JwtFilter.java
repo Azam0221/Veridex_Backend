@@ -104,8 +104,6 @@ public class JwtFilter extends OncePerRequestFilter {
 
         }
 
-
-
     }
 
     private void sendError(HttpServletResponse response, String message, HttpStatus status) throws IOException {
