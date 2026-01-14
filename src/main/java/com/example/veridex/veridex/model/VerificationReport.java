@@ -22,6 +22,7 @@ public class VerificationReport {
 
     private String auditTrailHash;
 
+    @com.fasterxml.jackson.annotation.JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime verifiedAt;
 
     @OneToOne

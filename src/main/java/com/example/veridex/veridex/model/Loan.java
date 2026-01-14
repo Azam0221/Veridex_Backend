@@ -31,7 +31,7 @@ public class Loan {
     private BigDecimal currentMargin;
 
     private Integer tenorYears;
-
+ 
 
     @Enumerated(EnumType.STRING)
     private Status status;
