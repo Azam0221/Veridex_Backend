@@ -76,6 +76,7 @@ public class VerificationService {
         }
     }
 
+    @Transactional(readOnly = true)
     public VerificationReport findByReportId(Long esgReportId) {
         return verificationRepository.findByEsgReport_Id(esgReportId)
                 .orElseThrow(() -> new RuntimeException("No verification found for Report ID: " + esgReportId));

@@ -10,6 +10,7 @@ import com.example.veridex.veridex.repository.VerificationRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -26,6 +27,7 @@ public class SyndicateService {
     private final VerificationRepository verificationRepository;
     private final UserRepository userRepository;
 
+    @Transactional
     public ResponseEntity<SyndicateMember> addMember(Long loanId , SyndicateRequest request){
 
 
@@ -68,6 +70,7 @@ public class SyndicateService {
         return ResponseEntity.ok(syndicateMemberRepository.save(member));
     }
 
+    @Transactional(readOnly = true)
     public List<SyndicateDashboardDTO> getLenderPortfolio(String lenderEmail) {
 
         List<SyndicateMember> myInvestments = syndicateMemberRepository.findByLender_Email(lenderEmail);
@@ -131,11 +134,13 @@ public class SyndicateService {
                 .build();
     }
 
+    @Transactional(readOnly = true)
     public List<VerificationReport> getAuditTrail(Long loanId) {
 
         return verificationRepository.findByEsgReport_Loan_IdOrderByVerifiedAtDesc(loanId);
     }
- 
+
+    @Transactional(readOnly = true)
     public SyndicateDashboardDTO getMemberStats(Long memberId) {
         SyndicateMember member = syndicateMemberRepository.findById(memberId)
                 .orElseThrow(() -> new RuntimeException("Member not found"));
@@ -167,8 +172,10 @@ public class SyndicateService {
 
 
 
+    @Transactional(readOnly = true)
     public List<SyndicateMember> getLoanMembers(Long loanId) {
         return syndicateMemberRepository.findByLoanId(loanId);
     }
 
 }
+ 
