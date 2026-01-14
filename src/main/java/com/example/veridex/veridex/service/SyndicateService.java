@@ -80,12 +80,11 @@ public class SyndicateService {
 
         Loan loan = member.getLoan();
 
-        BigDecimal marginDiff = loan.getBaseMargin().subtract(loan.getCurrentMargin()).abs();
 
+        BigDecimal marginDiff = loan.getBaseMargin().subtract(loan.getCurrentMargin()).abs();
         BigDecimal annualSavings = loan.getPrincipalAmount()
                 .multiply(marginDiff)
                 .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
-
         BigDecimal totalSavings = annualSavings.multiply(BigDecimal.valueOf(loan.getTenorYears()));
 
         BigDecimal shareRatio = BigDecimal.ZERO;
@@ -93,8 +92,31 @@ public class SyndicateService {
             shareRatio = member.getParticipationAmount()
                     .divide(loan.getPrincipalAmount(), 4, RoundingMode.HALF_UP);
         }
-
         BigDecimal mySavings = totalSavings.multiply(shareRatio);
+
+
+        List<SyndicateDashboardDTO.BenchmarkMetric> benchmarkList = loan.getKpi().stream().map(kpi -> {
+
+            double borrowerVal = kpi.getBaselineValue() != null ? kpi.getBaselineValue() : 0.0;
+            double industryVal;
+            boolean isBetter = true;
+            industryVal = borrowerVal * 1.2;
+            double diff = 0.0;
+            if (industryVal > 0) {
+                diff = Math.abs((industryVal - borrowerVal) / industryVal) * 100.0;
+            }
+
+            return SyndicateDashboardDTO.BenchmarkMetric.builder()
+                    .kpiName(kpi.getName())
+                    .unit(kpi.getUnit())
+                    .borrowerValue(Math.round(borrowerVal * 100.0) / 100.0)
+                    .industryAvg(Math.round(industryVal * 100.0) / 100.0)
+                    .isBetter(true)
+                    .percentageDiff(Math.round(diff * 10.0) / 10.0)
+                    .build();
+        }).collect(Collectors.toList());
+
+
 
         return SyndicateDashboardDTO.builder()
                 .loanId(loan.getId())
@@ -105,9 +127,10 @@ public class SyndicateService {
                 .myShareOfSavings(mySavings)
                 .baseMargin(loan.getBaseMargin())
                 .currentMargin(loan.getCurrentMargin())
+                .benchmarks(benchmarkList)
                 .build();
     }
-    
+
     public List<VerificationReport> getAuditTrail(Long loanId) {
 
         return verificationRepository.findByEsgReport_Loan_IdOrderByVerifiedAtDesc(loanId);

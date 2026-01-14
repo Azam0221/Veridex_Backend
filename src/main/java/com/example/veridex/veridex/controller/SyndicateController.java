@@ -31,10 +31,6 @@ public class SyndicateController {
         return ResponseEntity.ok(syndicateService.getLenderPortfolio(email));
     }
 
-//    @GetMapping("/dashboard/{memberId}")
-//    public ResponseEntity<SyndicateDashboardDTO> getMemberDashboard(@PathVariable Long memberId) {
-//        return ResponseEntity.ok(syndicateService.getMemberStats(memberId));
-//    }
 
     @GetMapping("/loan/{loanId}")
     public ResponseEntity<List<SyndicateMember>> getLoanMembers(@PathVariable Long loanId) {

@@ -4,6 +4,7 @@ import lombok.Builder;
 import lombok.Data;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 
 @Data
@@ -20,4 +21,18 @@ public class SyndicateDashboardDTO {
     private BigDecimal totalLoanSavings;
     private BigDecimal baseMargin;
     private BigDecimal currentMargin;
+
+    private List<BenchmarkMetric> benchmarks;
+
+
+    @Data
+    @Builder
+    public static class BenchmarkMetric {
+        private String kpiName;
+        private double borrowerValue;
+        private double industryAvg;
+        private String unit;
+        private boolean isBetter;
+        private double percentageDiff;
+    }
 }

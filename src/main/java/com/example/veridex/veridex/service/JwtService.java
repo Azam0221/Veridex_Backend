@@ -27,8 +27,8 @@ import java.util.function.Function;
 public class JwtService {
 
     private  String SECRET_KEY = "";
-    private final Long ACCESS_TOKEN_EXPIRY= (long) (1000 * 60 * 60);  // 15 mins expiry for the access_token
-    private final Long REFRESH_TOKEN_EXPIRY= (long) (1000 * 60 * 60 * 24 * 7); // 7 days expiry for the refresh_token
+    private final Long ACCESS_TOKEN_EXPIRY= (long) (1000 * 60 * 60);
+    private final Long REFRESH_TOKEN_EXPIRY= (long) (1000 * 60 * 60 * 24 * 7);
 
     public JwtService(){
         try {
@@ -119,11 +119,6 @@ public class JwtService {
         return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
 
     }
-
-//    public boolean isTokenValid(String token, UserDetails userDetails) {
-//        final String username = extractUserName(token);
-//        return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
-//    }
 
 
     public boolean isTokenExpired(String token){

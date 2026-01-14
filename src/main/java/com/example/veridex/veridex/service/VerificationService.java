@@ -37,8 +37,6 @@ public class VerificationService {
             for (Map.Entry<String, Object> entry : reportedData.entrySet()) {
 
                 String kpiKey = entry.getKey();
-
-                // 👇 FIXED: Robust extraction logic
                 Double reportedVal = extractValue(entry.getValue());
 
                 Double trustedVal = externalService.fetchTrustedValue(kpiKey, reportedVal);
@@ -69,7 +67,6 @@ public class VerificationService {
             return verificationRepository.save(verificationReport);
 
         } catch (Exception e){
-            // Print the extracted JSON to console so we can see what Gemini actually returned
             System.err.println("JSON Parsing Error on: " + report.getExtractedDataJson());
             e.printStackTrace();
             throw new RuntimeException("Error during verification: " + e.getMessage());
@@ -81,12 +78,11 @@ public class VerificationService {
                 .orElseThrow(() -> new RuntimeException("No verification found for Report ID: " + esgReportId));
     }
 
-    // 👇 NEW HELPER METHOD
     private Double extractValue(Object value) {
         if (value instanceof Number) {
             return ((Number) value).doubleValue();
         } else if (value instanceof Map) {
-            // If Gemini returned an object like {"value": 12.5, "unit": "tons"}, we dig for "value"
+
             Map<?, ?> map = (Map<?, ?>) value;
             if (map.containsKey("value") && map.get("value") instanceof Number) {
                 return ((Number) map.get("value")).doubleValue();
@@ -94,10 +90,10 @@ public class VerificationService {
             if (map.containsKey("amount") && map.get("amount") instanceof Number) {
                 return ((Number) map.get("amount")).doubleValue();
             }
-            // Fallback: Try to parse strings like "12.5 tons"
+
             return 0.0;
         } else if (value instanceof String) {
-            // Try to parse string "12.5"
+
             try {
                 return Double.parseDouble((String) value);
             } catch (NumberFormatException e) {
