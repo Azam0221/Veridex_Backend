@@ -9,6 +9,7 @@ import io.jsonwebtoken.security.Keys;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -26,21 +27,35 @@ import java.util.function.Function;
 @Service
 public class JwtService {
 
-    private  String SECRET_KEY = "";
+    @Value("${application.security.jwt.secret-key:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}")
+    private String SECRET_KEY;
+
     private final Long ACCESS_TOKEN_EXPIRY= (long) (1000 * 60 * 60);
     private final Long REFRESH_TOKEN_EXPIRY= (long) (1000 * 60 * 60 * 24 * 7);
 
-    public JwtService(){
-        try {
-        KeyGenerator keyGenerator = KeyGenerator.getInstance("HmacSHA256");
-        SecretKey sk = keyGenerator.generateKey();
-        SECRET_KEY = Base64.getEncoder().encodeToString(sk.getEncoded());
+//    public JwtService(){
+//        try {
+//        KeyGenerator keyGenerator = KeyGenerator.getInstance("HmacSHA256");
+//        SecretKey sk = keyGenerator.generateKey();
+//        SECRET_KEY = Base64.getEncoder().encodeToString(sk.getEncoded());
+//    }
+//        catch (
+//    NoSuchAlgorithmException e){
+//        e.printStackTrace();
+//    }
+//    }
+
+    // Add this inside JwtService.java
+    public ResponseCookie generateCookie(String name, String value, Long maxAge) {
+        return ResponseCookie.from(name, value)
+                .httpOnly(true)
+                .secure(true)
+                .sameSite("None")
+                .path("/")
+                .maxAge(maxAge / 1000)
+                .build();
     }
-        catch (
-    NoSuchAlgorithmException e){
-        e.printStackTrace();
-    }
-    }
+
 
     public String generateAcesssToken(String email, Role role){
 
@@ -77,10 +92,9 @@ public class JwtService {
                 .path("/")
                 .maxAge(0)
                 .httpOnly(true)
-                .secure(false)
-                .sameSite("Lax")
+                .secure(true)
+                .sameSite("None")
                 .build();
-
 
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
     }
