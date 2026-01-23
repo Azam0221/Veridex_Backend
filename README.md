@@ -82,7 +82,8 @@ All key business actions—**Risk Assessment, Loan Creation, KPI Verification, M
 2. **Configure Environment**  
    Update `application.properties` with your OpenAI Key:  
    ```
-   spring.ai.openai.api-key=YOUR_KEY_HERE
+   spring.gemini.api.url=YOUR_API_KEY
+   spring.gemini.api.key=YOUR_KEY_HERE
    ```
 3. **Build and Run**  
    ```bash
