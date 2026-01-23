@@ -101,6 +101,6 @@ public class GeminiService {
                 "  \"summary\": \"String\"\n" +
                 "}\n\n" +
                 "DOCUMENT TEXT:\n" + truncatedText;
-    }
+    } 
 
 }
