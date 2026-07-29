@@ -8,6 +8,7 @@ import com.example.veridex.veridex.model.User;
 import com.example.veridex.veridex.repository.UserRepository;
 import com.example.veridex.veridex.service.AuthService;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,29 +21,30 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")
+@RequiredArgsConstructor
 public class AuthController {
 
-    @Autowired
-    private AuthService authService;
 
-    @Autowired
-    private UserRepository userRepository;
+    private final AuthService authService;
+
+    private final UserRepository userRepository;
 
     @RequestMapping("login")
     public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest loginRequest, HttpServletResponse response){
-        return authService.loginVerify(loginRequest, response);
+        AuthResponse authResponse = authService.loginVerify(loginRequest, response);
+        return ResponseEntity.ok(authResponse);
     }
 
     @RequestMapping("register")
     public ResponseEntity<AuthResponse> register(@RequestBody RegisterRequest registerRequest, HttpServletResponse response){
-        return authService.register(registerRequest, response);
+        AuthResponse authResponse = authService.register(registerRequest, response);
+        return ResponseEntity.ok(authResponse);
     }
 
     @PostMapping("/logout")
     public ResponseEntity<AuthResponse> logout(HttpServletResponse response) {
-        System.out.println("Logout called");
-        return authService.logout(response);
-
+        AuthResponse authResponse = authService.logout(response);
+        return ResponseEntity.ok(authResponse);
     }
 
     @GetMapping("/profile")
@@ -54,24 +56,10 @@ public class AuthController {
             UserDetails userDetails = (UserDetails) principal;
             String email = userDetails.getUsername();
 
-            String role = userDetails.getAuthorities().stream()
-                    .findFirst()
-                    .map(item -> item.getAuthority())
-                    .orElse("USER");
-
-            User user = userRepository.findByEmail(email);
-
-
-            return ResponseEntity.ok(new AuthResponse(
-                    200,
-                    "User is authenticated",
-                    user.getName(),
-                    email,
-                    role,
-                    null,
-                    LocalDateTime.now()
-            ));
+            AuthResponse profileResponse = authService.getProfileByEmail(email);
+            return ResponseEntity.ok(profileResponse);
         }
+
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
     }
 
