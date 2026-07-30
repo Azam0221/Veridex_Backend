@@ -9,6 +9,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.http.HttpStatus;
@@ -18,6 +19,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
@@ -25,84 +27,73 @@ import java.time.LocalDateTime;
 import java.util.Map;
 
 @Component
+@RequiredArgsConstructor
+@Slf4j
 public class JwtFilter extends OncePerRequestFilter {
 
-    @Autowired
-    private JwtService jwtService;
 
-    @Autowired
-    ApplicationContext context;
+    private final JwtService jwtService;
+    private final MyUserDetailsService userDetailsService;
 
-
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        String path = request.getServletPath();
+        return path.equals("/") ||
+                path.startsWith("/api/auth/") ||
+                path.equals("/test/health");
+    }
 
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
 
-        System.out.println("Do Filter for path: " + request.getServletPath());
+        log.info("Security Checkpoint: Intercepted request for path: {}", request.getServletPath());
 
-        String path = request.getServletPath();
-        if( path.equals("/") ||
-                path.equals("/api/auth/login") ||
-            path.equals("/api/auth/register") ||
-            path.equals("/test/health") ||
-            path.equals("/api/auth/logout")){
+        String token = jwtService.extractTokenFromCookie(request, "access_token");
+        String email = null;
 
-            filterChain.doFilter(request,response);
-            return;
-        }
 
-        String token =  jwtService.extractTokenFromCookie(request,"access_token");
-        String email = "";
-
-        System.out.println("Checking for token in cookies");
         if(token != null && !token.isEmpty()){
-            System.out.println("Token found in cookies");
             try {
                 email = jwtService.extractUserName(token);
-                System.out.println("EMAIL extracted: " + email);
+                log.debug("Email extracted from token: {}", email);
             } catch (Exception e) {
-                System.out.println("Error extracting email from token: " + e.getMessage());
+                log.warn("Error extracting email from token: {}", e.getMessage());
                 sendError(response, "Invalid token format", HttpStatus.UNAUTHORIZED);
                 return;
             }
         }
         else {
-            System.out.println("No access token in cookies");
+            log.warn("Access token missing from cookies");
             sendError(response, "Access token missing from cookies", HttpStatus.UNAUTHORIZED);
             return;
         }
 
         if(email!=null && SecurityContextHolder.getContext().getAuthentication() == null){
             try {
-                UserDetails userDetails = context.getBean(MyUserDetailsService.class).loadUserByUsername(email);
+
+                UserDetails userDetails = userDetailsService.loadUserByUsername(email);
 
                 if (jwtService.validateToken(token, userDetails)) {
 
                     UsernamePasswordAuthenticationToken authtoken = new UsernamePasswordAuthenticationToken(
                             userDetails, null, userDetails.getAuthorities()
                     );
-
                     authtoken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                     SecurityContextHolder.getContext().setAuthentication(authtoken);
+                    log.info("Successfully authenticated user: {}", email);
                 } else {
-                    System.out.println("Token validation failed for user: " + email);
+                    log.warn("Token validation failed for user: {}", email);
                     sendError(response, "Invalid or expired token", HttpStatus.UNAUTHORIZED);
                     return;
                 }
             } catch (Exception e) {
-                System.out.println("Error during authentication: " + e.getMessage());
+                log.error("Error during authentication: {}", e.getMessage());
                 sendError(response, "Authentication failed", HttpStatus.UNAUTHORIZED);
                 return;
             }
         }
-
-        try {
             filterChain.doFilter(request,response);
-        }
-        finally {
-
-        }
 
     }
 
@@ -113,10 +104,9 @@ public class JwtFilter extends OncePerRequestFilter {
                 null,
                 null,
                 null,
-                Map.of("token", message),
+                Map.of("error", message),
                 LocalDateTime.now()
         );
-
         response.setStatus(status.value());
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         new ObjectMapper().writeValue(response.getWriter(), error);
