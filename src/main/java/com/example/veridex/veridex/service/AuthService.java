@@ -5,123 +5,92 @@ import com.example.veridex.veridex.enum_.Role;
 import com.example.veridex.veridex.model.*;
 import com.example.veridex.veridex.repository.TokenRepository;
 import com.example.veridex.veridex.repository.UserRepository;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 
 @Service
+@RequiredArgsConstructor
+@Slf4j
 public class AuthService {
 
-    @Autowired
-    private UserRepository userRepo;
 
-    @Autowired
-    JwtService jwtService;
+    private final UserRepository userRepo;
+    private final JwtService jwtService;
+    private final TokenRepository tokenRepository;
+    private final AuthenticationManager authManager;
+    private final PasswordEncoder passwordEncoder;
 
-    @Autowired
-    TokenRepository tokenRepository;
-
-    @Autowired
-    AuthenticationManager authManager;
-
-    private BCryptPasswordEncoder encoder = new BCryptPasswordEncoder(12);
 
     @Transactional
-    public ResponseEntity<AuthResponse> register(RegisterRequest request, HttpServletResponse response){
-        String accessToken = "";
-        String refreshToken = "";
-        String name = "";
-        String email = request.getEmail();
+    public AuthResponse register(RegisterRequest request, HttpServletResponse response){
+
+        log.info("Processing registration for email: {}", request.getEmail());
+
+        if (userRepo.existsByEmail(request.getEmail())) {
+            log.warn("Registration failed - Email already exists: {}", request.getEmail());
+            throw new IllegalStateException("This email is already registered");
+        }
+
         Role userRole;
-        String roleString = request.getRole();
 
-        if(userRepo.existsByEmail(request.getEmail())){
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
-                    new AuthResponse(400, "Email already exists", null, null,null,
-                            Map.of("email", "This email is already registered"), LocalDateTime.now()));
-        }
-        else {
-            User user = new User();
-
-            user.setEmail(request.getEmail());
-            user.setPassword(request.getPassword());
-            user.setName(request.getName());
-            user.setPassword(encoder.encode(user.getPassword()));
-
-
-
-
-            try {
-                if (roleString == null || roleString.isEmpty()) {
-                    userRole = Role.BORROWER;
-                } else {
-                    userRole = Role.valueOf(roleString.toUpperCase());
-                }
-            } catch (IllegalArgumentException e) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
-                        new AuthResponse(400, "Invalid Role Selection", null, null,null,
-                                Map.of("role", "Role must be BORROWER, AGENT, or LENDER"), LocalDateTime.now()));
-            }
-            user.setRole(userRole);
-
-            userRepo.save(user);
-
-            accessToken = jwtService.generateAcesssToken(request.getEmail(),userRole);
-            refreshToken = jwtService.generateRefreshToken(request.getEmail(),userRole);
-
-            saveUserToken(user,refreshToken);
-
-            setTokenCookies(response, accessToken, refreshToken);
+        try {
+            String roleString = request.getRole();
+            userRole = (roleString == null || roleString.isEmpty())
+                    ? Role.BORROWER
+                    : Role.valueOf(roleString.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            log.warn("Registration failed - Invalid role requested: {}", request.getRole());
+            throw new IllegalArgumentException("Role must be BORROWER, AGENT, or LENDER");
         }
 
-        return ResponseEntity.ok(new AuthResponse(
-                200,
+        User user = new User();
+        user.setEmail(request.getEmail());
+        user.setName(request.getName());
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
+        user.setRole(userRole);
+
+        userRepo.save(user);
+        log.info("User saved to database: {}", user.getEmail());
+
+        String accessToken = jwtService.generateAcesssToken(user.getEmail(), userRole);
+        String refreshToken = jwtService.generateRefreshToken(user.getEmail(), userRole);
+
+        saveUserToken(user, refreshToken);
+        setTokenCookies(response, accessToken, refreshToken);
+
+        return new AuthResponse(
+                201,
                 "User registered successfully",
                 request.getName(),
-                email,
+                request.getEmail(),
                 userRole.toString(),
-                null, // No errors
+                null,
                 LocalDateTime.now()
-        ));
+        );
     }
 
 
-    public ResponseEntity<AuthResponse> loginVerify(LoginRequest loginRequest, HttpServletResponse response){
-        if(loginRequest.getEmail().isEmpty()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
-                    new AuthResponse(400, "Email not found", null, null,null,
-                            Map.of("email", "Email is empty"), LocalDateTime.now()));
+    public AuthResponse loginVerify(LoginRequest loginRequest, HttpServletResponse response){
+
+        log.info("Login request received: {}", loginRequest.getEmail());
+
+        if(loginRequest.getEmail() == null || loginRequest.getEmail().isEmpty()) {
+            throw new IllegalArgumentException("Email cannot be empty");
         }
-        User user = userRepo.findByEmail(loginRequest.getEmail());
-        if(user == null) {
-            System.out.println("User not found in database: " + loginRequest.getEmail());
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
-                    new AuthResponse(401, "Invalid email or password", null, null,null,
-                            Map.of("email", "User not found"), LocalDateTime.now()));
-        }
-
-
-
-        String accessToken ="";
-        String refreshToken ="";
-        String name = "";
-        String email = loginRequest.getEmail();
-        System.out.println("User found: " + user);
 
         try {
 
@@ -130,40 +99,36 @@ public class AuthService {
 
             if (authentication.isAuthenticated()) {
 
-                accessToken = jwtService.generateAcesssToken(loginRequest.getEmail(), user.getRole());
-                refreshToken = jwtService.generateRefreshToken(loginRequest.getEmail(), user.getRole());
+                User user = userRepo.findByEmail(loginRequest.getEmail());
+
+                String accessToken = jwtService.generateAcesssToken(user.getEmail(), user.getRole());
+                String refreshToken = jwtService.generateRefreshToken(user.getEmail(), user.getRole());
+
+                revokeAllToken(user);
+                saveUserToken(user, refreshToken);
 
                 setTokenCookies(response, accessToken, refreshToken);
 
-                return ResponseEntity.ok(new AuthResponse(
+                log.info("Login successful for user: {}", user.getEmail());
+
+                return new AuthResponse(
                         200,
                         "User login successfully",
                         user.getName(),
-                        email,
+                        user.getEmail(),
                         user.getRole().toString(),
                         null,
                         LocalDateTime.now()
-                ));
+                );
             }
         }
+
         catch (AuthenticationException e) {
-            System.out.println("Authentication failed: " + e.getMessage());
-            System.out.println("Reason: Invalid password or credentials");
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
-                    new AuthResponse(401, "Invalid email or password", null, null,null,
-                            Map.of("email", "Invalid credentials"), LocalDateTime.now()));
-        } catch (Exception e) {
-            System.out.println("Unexpected error during login: " + e.getMessage());
-            e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
-                    new AuthResponse(500, "Login error", null, null,null,
-                            Map.of("error", e.getMessage()), LocalDateTime.now()));
+            log.warn("Authentication failed for email: {} - Reason: {}", loginRequest.getEmail(), e.getMessage());
+            throw new BadCredentialsException("Invalid email or password");
         }
 
-        System.out.println("Login failed - unknown reason");
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
-                new AuthResponse(401, "Login failed", null, null,null,
-                        Map.of("email", "Something went wrong try again"), LocalDateTime.now()));
+        throw new RuntimeException("Unexpected login failure");
     }
 
 
@@ -192,30 +157,47 @@ public class AuthService {
 
 
     private void setTokenCookies(HttpServletResponse response, String accessToken, String refreshToken) {
-        ResponseCookie accessCookie = jwtService.generateCookie("access_token", accessToken, 1000 * 60 * 60L);
 
+        ResponseCookie accessCookie = jwtService.generateCookie("access_token", accessToken, 1000 * 60 * 60L);
         ResponseCookie refreshCookie = jwtService.generateCookie("refresh_token", refreshToken, 1000 * 60 * 60 * 24 * 7L);
 
         response.addHeader(HttpHeaders.SET_COOKIE, accessCookie.toString());
         response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
     }
 
-    public  ResponseEntity<AuthResponse> logout(HttpServletResponse response){
+    public AuthResponse logout(HttpServletResponse response){
+        jwtService.clearCookie(response, "access_token");
+        jwtService.clearCookie(response, "refresh_token");
 
-        jwtService.clearCookie(response,"access_token");
-        jwtService.clearCookie(response,"refresh_token");
+        log.info("Logout successful, cookies cleared.");
 
-        System.out.println("Logout successfull");
-
-        return ResponseEntity.ok(new AuthResponse(
+        return new AuthResponse(
                 200,
                 "Logout successful",
                 null,
                 null,
                 null,
-                Map.of(),
+                null,
                 LocalDateTime.now()
-        ));
+        );
+    }
+
+    public AuthResponse getProfileByEmail(String email) {
+        User user = userRepo.findByEmail(email);
+
+        if (user == null) {
+            throw new RuntimeException("User not found");
+        }
+
+        return new AuthResponse(
+                200,
+                "User is authenticated",
+                user.getName(),
+                user.getEmail(),
+                user.getRole().toString(),
+                null,
+                LocalDateTime.now()
+        );
     }
 
 }
