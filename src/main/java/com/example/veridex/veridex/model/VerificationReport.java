@@ -3,12 +3,15 @@ package com.example.veridex.veridex.model;
 
 import com.example.veridex.veridex.enum_.Status;
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
 @Entity(name = "verification_report")
-@Data
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class VerificationReport {
 
     @Id

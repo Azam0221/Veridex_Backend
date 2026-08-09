@@ -4,16 +4,18 @@ package com.example.veridex.veridex.model;
 import com.example.veridex.veridex.enum_.OptimizationType;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.*;
 
 @Entity(name = "kpi")
-@Data
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class KPI {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
     private String name;
     private String kpiType;
     private String unit;

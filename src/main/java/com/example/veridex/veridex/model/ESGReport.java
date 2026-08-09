@@ -4,12 +4,15 @@ package com.example.veridex.veridex.model;
 import com.example.veridex.veridex.enum_.Status;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
 @Entity(name = "esg_report")
-@Data
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class ESGReport {
 
     @Id
@@ -21,12 +24,13 @@ public class ESGReport {
     @Lob
     @Basic(fetch = FetchType.LAZY)
     @Column(columnDefinition = "TEXT")
-    @com.fasterxml.jackson.annotation.JsonIgnore
+    @JsonIgnore
     private String rawPdfText;
 
     @Column(columnDefinition = "TEXT")
     private String extractedDataJson;
 
+    @Enumerated(EnumType.STRING)
     private Status status;
 
     @com.fasterxml.jackson.annotation.JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
