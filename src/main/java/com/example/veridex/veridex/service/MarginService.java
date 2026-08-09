@@ -82,7 +82,7 @@ public class MarginService {
             }
         }
 
-        BigDecimal marginDiff = loan.getBaseMargin().subtract(currentMargin).abs();
+        BigDecimal marginDiff = loan.getBaseMargin().subtract(currentMargin);
 
         BigDecimal annualSavings = loan.getPrincipalAmount()
                 .multiply(marginDiff)
