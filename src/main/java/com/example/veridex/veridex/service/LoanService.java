@@ -28,18 +28,18 @@ public class LoanService {
     private final UserRepository userRepository;
 
     @Transactional
-    public ResponseEntity<Loan> createLoan(LoanRequest request, String agentEmail){
+    public Loan createLoan(LoanRequest request, String agentEmail){
 
         User agentUser = userRepository.findByEmail(agentEmail);
 
-        if(agentUser == null){
-            return ResponseEntity.badRequest().body(null);
+        if (agentUser == null) {
+            throw new IllegalArgumentException("Agent user not found.");
         }
 
         User borrowerUser = userRepository.findByEmail(request.getBorrowerEmail());
 
-        if(borrowerUser == null){
-            return ResponseEntity.badRequest().body(null);
+        if (borrowerUser == null) {
+            throw new IllegalArgumentException("Borrower user not found.");
         }
 
         Loan loan = new Loan();
@@ -85,7 +85,7 @@ public class LoanService {
                 kpiRepository.save(kpi);
             }
         }
-        return ResponseEntity.ok(savedLoan);
+        return savedLoan;
 
     }
 
