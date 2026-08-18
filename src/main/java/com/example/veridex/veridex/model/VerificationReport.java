@@ -37,7 +37,4 @@ public class VerificationReport {
         verifiedAt = LocalDateTime.now();
     }
 
-
- 
-
 }

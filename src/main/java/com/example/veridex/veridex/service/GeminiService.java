@@ -46,11 +46,10 @@ public class GeminiService {
         List<String> chunkResults = futures.stream()
                 .map(CompletableFuture::join)
                 .toList();
-
-
         return mergeJsonResults(chunkResults);
 
     }
+    
 
     private String processSingleChunk(String chunk, String kpiPrompts) {
 

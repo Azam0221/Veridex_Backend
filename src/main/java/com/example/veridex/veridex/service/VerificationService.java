@@ -7,15 +7,20 @@ import com.example.veridex.veridex.repository.ESGReportRepository;
 import com.example.veridex.veridex.repository.VerificationRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class VerificationService {
 
     private final ESGReportRepository esgReportRepository;
@@ -25,6 +30,8 @@ public class VerificationService {
 
     @Transactional
     public VerificationReport verifyReport(Long loanId){
+
+        log.info("Starting Verification Process for Loan ID: {}", loanId);
 
         ESGReport report = esgReportRepository.findTopByLoanIdOrderByUploadTimestampDesc(loanId)
                 .orElseThrow(() -> new RuntimeException("No ESG Reports found for Loan ID: " + loanId));
@@ -41,10 +48,14 @@ public class VerificationService {
 
                 String kpiKey = entry.getKey();
                 Double reportedVal = extractValue(entry.getValue());
-
                 Double trustedVal = externalService.fetchTrustedValue(kpiKey, reportedVal);
 
-                double variance = Math.abs((reportedVal - trustedVal) / trustedVal) * 100.0;
+                double variance = 0.0;
+                if (trustedVal != 0.0) {
+                    variance = Math.abs((reportedVal - trustedVal) / trustedVal) * 100.0;
+                } else if (reportedVal != 0.0) {
+                    variance = 100.0;
+                }
 
                 Status status = (variance <= 5.0) ? Status.VERIFIED : Status.FLAGGED;
                 if (status.equals(Status.FLAGGED)) allPassed = false;
@@ -58,20 +69,24 @@ public class VerificationService {
                 verificationResults.put(kpiKey, kpiResult);
             }
 
+            String detailsJson = objectMapper.writeValueAsString(verificationResults);
+
             VerificationReport verificationReport = new VerificationReport();
             verificationReport.setEsgReport(report);
             verificationReport.setOverallStatus(allPassed ? Status.VERIFIED : Status.REQUIRES_REVIEW);
-            verificationReport.setVerificationDetailsJson(objectMapper.writeValueAsString(verificationResults));
-            verificationReport.setAuditTrailHash(UUID.randomUUID().toString().replace("-", "") + "0x");
+            verificationReport.setVerificationDetailsJson(detailsJson);
+
+            verificationReport.setAuditTrailHash(generateSHA256Hash(detailsJson));
 
             report.setStatus(allPassed ? Status.VERIFIED : Status.FLAGGED);
             esgReportRepository.save(report);
 
+            log.info("Verification complete. Status: {}", verificationReport.getOverallStatus());
+
             return verificationRepository.save(verificationReport);
 
         } catch (Exception e){
-            System.err.println("JSON Parsing Error on: " + report.getExtractedDataJson());
-            e.printStackTrace();
+            log.error("Error during verification for Report ID {}: {}", report.getId(), e.getMessage(), e);
             throw new RuntimeException("Error during verification: " + e.getMessage());
         }
     }
@@ -106,4 +121,24 @@ public class VerificationService {
         }
         return 0.0;
     }
+
+    private String generateSHA256Hash(String data) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(data.getBytes(StandardCharsets.UTF_8));
+            StringBuilder hexString = new StringBuilder(2 * hash.length);
+            for (byte b : hash) {
+                String hex = Integer.toHexString(0xff & b);
+                if (hex.length() == 1) {
+                    hexString.append('0');
+                }
+                hexString.append(hex);
+            }
+            return "0x" + hexString.toString();
+        } catch (NoSuchAlgorithmException e) {
+            log.error("SHA-256 algorithm not found, falling back to UUID");
+            return "0x" + UUID.randomUUID().toString().replace("-", "");
+        }
+    }
+
 }
