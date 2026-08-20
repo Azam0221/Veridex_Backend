@@ -23,7 +23,7 @@ public class ESGReport {
 
     @Lob
     @Basic(fetch = FetchType.LAZY)
-    @Column(columnDefinition = "TEXT")
+    @Column(columnDefinition = "LONGTEXT")
     @JsonIgnore
     private String rawPdfText;
 
